@@ -1,0 +1,41 @@
+Add-PSSnapin Microsoft.Exchange.Management.PowerShell.SnapIn
+
+#setup loop
+$TimeStart = Get-Date
+$TimeEnd = $timeStart.addhours(12)
+Write-Host "Start Time: $TimeStart"
+write-host "End Time:   $TimeEnd"
+
+Do { 
+ $TimeNow = Get-Date
+ if ($TimeNow -ge $TimeEnd) {
+ $Finish = get-date
+  Write-host "Finished at $Finish."
+ } 
+ 
+else {
+
+
+$OU = "OU=Users ,DC=mydomain,DC=co,DC=uk"
+#$usersno = Get-ADUser -Filter * -SearchBase $OU -searchscope onelevel -Properties mail | where {$_.mail -eq $null} | Measure-Object
+$usersno = Get-ADUser -Filter * -SearchBase $OU -Properties mail | where {$_.mail -eq $null} | Measure-Object
+
+If ($usersno.count -ne 0){
+
+$user = get-aduser -filter * -searchbase $OU -searchscope onelevel
+
+foreach($user in $user){
+        
+        if ($(Get-ADUser $user -Properties mail).mail -eq $null) 
+        {
+        $remotead = $staff.SamAccountName+"@mydomain.mail.onmicrosoft.com"
+        Enable-Remotemailbox -Identity $staff.SamAccountName -RemoteRoutingAddress $remotead
+        
+        }
+    }
+ }
+    Else {"No New Accounts - sleeping for 30 seconds"}
+    }
+Start-Sleep -Seconds 5
+}
+until ($TimeNow -ge $TimeEnd)
