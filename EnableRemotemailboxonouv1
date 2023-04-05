@@ -1,0 +1,24 @@
+# Set the email parameters
+$smtpServer = "smtp.mycompany.com"
+$from = "admin@mycompany.com"
+$to = "logs@mycompany.com"
+$subject = "Remote Mailbox Enabled"
+
+# Set the OU to search
+$ou = "OU=Users,DC=mydomain,DC=com"
+
+# Get a list of users in the OU
+$users = Get-ADUser -SearchBase $ou -Filter *
+
+# Loop through each user
+foreach ($user in $users) {
+    # Check if the user has a remote mailbox
+    if (-not (Get-RemoteMailbox $user.SamAccountName -ErrorAction SilentlyContinue)) {
+        # Enable the remote mailbox for the user
+        Enable-RemoteMailbox $user.SamAccountName -Alias $user.SamAccountName
+        
+        # Send an email notification
+        $body = "Remote mailbox enabled for $($user.SamAccountName)"
+        Send-MailMessage -SmtpServer $smtpServer -From $from -To $to -Subject $subject -Body $body
+    }
+}
