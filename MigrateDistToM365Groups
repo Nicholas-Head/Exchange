@@ -1,0 +1,29 @@
+function Pause-15Minutes {
+    Start-Sleep -Seconds (15 * 60)
+}
+
+
+
+
+# Connect to Exchange Online
+Connect-ExchangeOnline -UserPrincipalName yourUPN -ShowProgress $true
+
+# Define the name of the distribution list to migrate
+$distListName = "TestDistList"
+
+# Export the members of the distribution list to a CSV file
+$members = Get-DistributionGroupMember -Identity $distListName | Select-Object Name,PrimarySmtpAddress
+$members | Export-Csv -Path "C:\DistListMembers.csv" -NoTypeInformation
+
+# Remove the original distribution list
+Remove-DistributionGroup -Identity $distListName -Confirm:$false -Verbose
+
+Pause-15Minutes
+
+# Create a new Office 365 group and add the members
+New-UnifiedGroup -DisplayName $distListName -Alias $distListName -PrimarySmtpAddress $distListName@yourdomain.com -owners "ExchangeSA@mycompanydomain.com" -Members $members.PrimarySmtpAddress -RequireSenderAuthenticationEnabled $false -Verbose
+
+# Enable the "Send copies of group conversations and events to group members" feature for the new group
+Set-UnifiedGroup -Identity $distListName -UnifiedGroupWelcomeMessageEnabled $false -Verbose
+
+
