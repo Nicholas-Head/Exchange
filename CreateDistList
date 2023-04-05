@@ -1,0 +1,8 @@
+# First, connect to Exchange Online
+Connect-ExchangeOnline -UserPrincipalName yourUPN
+
+# Next, create a new distribution list
+New-DistributionGroup -Name "MyDistributionList" -Alias "MyDistributionList" -PrimarySmtpAddress "MyDistributionList@yourdomain.com" -ManagedBy "user1@yourdomain.com"
+
+# Add users to the distribution list
+Add-DistributionGroupMember -Identity "MyDistributionList" -Member "user2@yourdomain.com","user3@yourdomain.com"
