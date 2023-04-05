@@ -1,0 +1,8 @@
+# First, connect to Exchange Online
+Connect-ExchangeOnline -UserPrincipalName yourUPN -ShowProgress $true
+
+# Next, create a new distribution list
+New-DistributionGroup -Name "MyDistributionList" -Alias "MyDistributionList" -PrimarySmtpAddress "MyDistributionList@yourdomain.com" -ManagedBy "user1@yourdomain.com"
+
+# Import users from a CSV file and add them to the distribution list
+Import-Csv "C:\Users.csv" | ForEach-Object { Add-DistributionGroupMember -Identity "MyDistributionList" -Member $_.EmailAddress }
