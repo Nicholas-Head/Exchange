@@ -1,0 +1,23 @@
+# First, connect to Exchange on-premises
+$credential = Get-Credential
+$session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://youronpremisesexchange.com/PowerShell/ -Authentication Kerberos -Credential $credential
+Import-PSSession $session
+
+# Next, export the distribution lists to a CSV file
+Get-DistributionGroup | Export-Csv -Path "C:\DistributionLists.csv" -NoTypeInformation
+
+# Move the distribution groups to the Azure Out Of Scope OU
+$ou = "OU=Azure Out Of Scope,DC=contoso,DC=com"
+Import-Module ActiveDirectory
+Import-Csv "C:\DistributionLists.csv" | ForEach-Object {
+    Move-ADObject -Identity $_.DistinguishedName -TargetPath $ou
+}
+
+# Now, connect to Exchange Online
+Connect-ExchangeOnline -UserPrincipalName yourUPN -ShowProgress $true
+
+# Finally, import the distribution lists to Exchange Online and create a contact for each distribution list
+Import-Csv "C:\DistributionLists.csv" | ForEach-Object {
+    $group = New-DistributionGroup -Name $_.Name -Alias $_.Alias -PrimarySmtpAddress $_.PrimarySmtpAddress -ManagedBy $_.ManagedBy
+    New-MailContact -Name "$($_.Name) Contact" -ExternalEmailAddress $_.PrimarySmtpAddress -FirstName $_.Name -LastName "Contact" -OrganizationalUnit "Exchange Contacts" -DisplayName "$($_.Name) Contact" -Alias "$($_.Name)Contact" -Notes "Contact for $($_.Name) distribution list" -ForwardingAddress $group.PrimarySmtpAddress
+}
